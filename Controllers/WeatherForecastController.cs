@@ -13,7 +13,7 @@ public class WeatherForecastController : ControllerBase
     private readonly string OBJECTID = "9ed58293355cf93b6040c9b58e944a74";
     private readonly string TABLE = "TodoApi";
     // POSTを行うメソッド
-    // 非同期処理のため返り値はTaskを使います
+    // 同期処理のため返り値はTaskを使います
     private async Task<string> postAPI(string json)
     {
         // HTTPクライアント
