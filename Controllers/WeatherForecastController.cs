@@ -43,26 +43,23 @@ public class WeatherForecastController : ControllerBase
         // 見やすくするためコンソールの文字に色を付けます
         Console.ForegroundColor = ConsoleColor.Green;
         Console.WriteLine($"Start: {start}");
-        // ユニークIDの一覧を取得
+        // アイテムの行数をカウント
         // メソッド引数に型定義していてコード補完できるので入力ミスを減らせるかなと
         // 引数の型や数が合わないとエラーになるはずです
-        xs_query_get_uniqid_from_index unique = new xs_query_get_uniqid_from_index(OBJECTID, TABLE, 0, 200);
+        xs_query_get_number_of_row rowCount = new xs_query_get_number_of_row(OBJECTID, TABLE);
         // APIが認識できるJSON形式に変換してからPOSTします
-        string result = await postAPI(unique.toJson());
-        // APIの返り値を文字列の配列に変換
+        string result = await postAPI(rowCount.toJson());
+        // APIの返り値を数値に変換
         // 返り値は文字型なのでプログラムで扱いやすくするようJSON形式にデシリアライズします
-        string[]? uniqIdList = JsonSerializer.Deserialize<xs_query_get_uniqid_from_index_return>(result)?.uniqID;
+        int? uniqIdCount = JsonSerializer.Deserialize<xs_query_get_number_of_row_return>(result)?.numberOfRow;
         // もしユニークIDがないなら(空)
-        if (uniqIdList?.Length == null)
-        {
-            // 連番のユニークIDを5つ代入(新規作成)
-            uniqIdList = new string[5] { "1", "2", "3", "4", "5" };
-        }
+        // 追加するデータの個数を設定します
+        if (uniqIdCount == 0) uniqIdCount = 5;
         // POSTするデータを用意します
         // 毎回HTTP接続すると遅いので最後にまとめてPOSTします
         string postData = "";
         // ユニークIDの数だけ繰り返し
-        for (int i = 0; i < uniqIdList?.Length; i++)
+        for (int i = 0; i < uniqIdCount; i++)
         {
             // 送信するデータの準備
             // Dateは今日からの日付
@@ -83,7 +80,7 @@ public class WeatherForecastController : ControllerBase
                 TABLE,
                 new string[] { "date", "summary", "tempC", "tempF" },
                 new string[] { weather.Date.ToString(), weather.Summary, weather.TemperatureC.ToString(), weather.TemperatureF.ToString() },
-                uniqIdList[i],
+                (i + 1).ToString().PadLeft(32, '0'),
                 true,
                 true
             );
@@ -104,6 +101,6 @@ public class WeatherForecastController : ControllerBase
         );
         // 最後にSwaggerに完了表示をして終わり
         // エラー例外処理を入れていないのでサーバーダウン時などの処理は入れておいたほうがいいかも
-        return $"{uniqIdList?.Length} 件追加または更新しました。\nQUERY SERVER PLAYGROUNDをご確認ください。\nhttps://dev6playground.qcs.center/";
+        return $"{uniqIdCount} 件追加または更新しました。\nQUERY SERVER PLAYGROUNDをご確認ください。\nhttps://dev6playground.qcs.center/";
     }
 }
